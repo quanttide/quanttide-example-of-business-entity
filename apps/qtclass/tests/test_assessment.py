@@ -1,4 +1,4 @@
-# 学员旅程集成测试：完整跑整个过程（GUI 离屏 + 临时数据库）
+# 免费学员考核集成测试：完整跑整个过程（GUI 离屏 + 临时数据库）
 
 ANSWERS = {
     'self_position': '我更多是抱着学习的想法来的，渴望成长，愿意踏实地学',
@@ -9,10 +9,10 @@ ANSWERS = {
 }
 
 
-class TestFullJourney:
-    """报名 → 问卷 → 凭证 → 进群 → 领任务 → 交付，一条链跑完不断点。"""
+class TestFullAssessment:
+    """报名 → 问卷 → 凭证 → 领任务 → 交付，一条链跑完不断点。"""
 
-    NAME = '旅程测试员'
+    NAME = '考核测试员'
 
     def _fill_survey(self, window):
         for key, value in ANSWERS.items():
