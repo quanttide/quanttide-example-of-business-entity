@@ -22,7 +22,7 @@ class TestFullAssessment:
             else:
                 widget.setText(value)
 
-    def test_full_journey(self, window, tmp_store, tmp_path, monkeypatch):
+    def test_full_assessment(self, window, tmp_store, tmp_path, monkeypatch):
         # 1. 报名表单 → 提交 → 进入问卷面板（时间线高亮问卷节点）
         window.course.setCurrentIndex(0)
         window.name.setText(self.NAME)
