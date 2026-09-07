@@ -31,4 +31,4 @@ applied → survey_done → invited → task_assigned → task_submitted
 
 ## 规划中
 
-评审环节的迁移函数（评估结论录入：授予免费学员资格 / 退回）尚未实现，见 [ROADMAP](../../ROADMAP.md)。
+评审环节的迁移函数（评估结论录入：授予免费学员资格 / 退回）尚未实现，见 [ROADMAP](../../ROADMAP.md)。付费点（与免费资格双轨）为更远期的预留，不进入当前状态机。
