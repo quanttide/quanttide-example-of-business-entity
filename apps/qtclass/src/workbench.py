@@ -5,13 +5,13 @@
 
 信息架构：旅程时间线常驻左侧作为主干，右侧详情面板永远是
 「当前节点的动作」——报名表单就是「报名」节点的动作，
-问卷/进群/领任务/交付是主干上的后续节点，不设并列 Tab。
+问卷/领任务/交付是主干上的后续节点，不设并列 Tab。
 
 关键设计：
 
 - 状态迁移全部是系统内事件（本地存储），无邮件、无外部服务
 - 问卷为工作台内嵌表单，只问动机题；身份信息由报名一次采集
-- 进群凭证 = 工作台内直接展示二维码（可选资产，缺省显示占位说明），扫码进群后在工作台内确认，闭环推进到领任务
+- 进群不设独立环节：问卷提交后凭证（二维码）直接附带在领任务面板，无确认门槛
 - 领任务/交付 = 工作台内动作（学员点击、文件选择器），触发器不在环外
 
 运行：python workbench.py（依赖 PySide6；无需任何配置）
@@ -76,51 +76,46 @@ COURSES = [
 ]
 
 # 学员旅程
-JOURNEY = ['报名', '问卷', '进群', '领任务', '交付', '评审', '出师']
+JOURNEY = ['报名', '问卷', '领任务', '交付', '评审', '出师']
 
 # 状态机状态 → 旅程阶段索引
 STATUS_STAGE = {
     'applied': 0,
     'survey_done': 1,
     'invited': 1,
-    'in_group': 2,
-    'task_assigned': 3,
-    'task_submitted': 4,
-    'reviewing': 4,
-    'graded': 5,
-    'enrolled': 6,
+    'task_assigned': 2,
+    'task_submitted': 3,
+    'reviewing': 3,
+    'graded': 4,
+    'enrolled': 5,
     'dormant': 0,
     'rejected': 0,
 }
 
 # 旅程面板 → 时间线节点：面板以动作定义，时间线以旅程节点高亮
-# 如：面板 1（进群凭证）对应时间线「进群」节点
-STAGE_JOURNEY = {0: 0, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 6}
+# 如：面板 1（领任务，附带二维码）对应时间线「领任务」节点
+STAGE_JOURNEY = {0: 0, 1: 2, 2: 3, 3: 4, 4: 5, 5: 5}
 
 # 各旅程节点的详情面板：标题 + 说明 + 动作列表 (文案, 类型, 参数)
-# 类型：survey=内嵌问卷 / site=打开学习中心 / advance=学员确认推进 /
-#       in_group=扫码后确认进群 / deliver=工作台内交付
+# 类型：survey=内嵌问卷 / site=打开学习中心 / advance=学员确认推进 / deliver=工作台内交付
 STAGE_DETAIL = {
     0: ('报名已提交',
-        '完成准入问卷即进入进群环节（7 天内完成，超时学习资格转休眠）。',
+        '完成准入问卷即可领取任务（7 天内完成，超时学习资格转休眠）。',
         [('填写准入问卷', 'survey', None)]),
-    1: ('进群凭证',
-        '这是你的入群二维码（7 天内有效），扫码进实训基地群；进群后在下方确认，即可领任务。',
-        [('我已进群，去领任务', 'in_group', None)]),
-    2: ('领取任务',
-        '在学习中心浏览任务清单，选择要做的任务。',
+    1: ('领取任务',
+        '问卷已完成，入群二维码附在下方（7 天内有效）；扫码进群后，在学习中心浏览任务清单。',
         [('打开学习中心', 'site', None),
          ('已领到任务，标记进行中', 'advance', None)]),
-    3: ('任务进行中',
+    2: ('任务进行中',
         '按任务 deadline 完成后，在工作台直接提交交付物，交付即进入评审队列。',
         [('提交交付物', 'deliver', None)]),
-    4: ('评审中',
+    3: ('评审中',
         '交付物进入双人评审（代表初审 + 负责人终审），约 7 天出结论。',
         []),
-    5: ('即将入册',
+    4: ('即将入册',
         '评估已定档，等待免费额度确认或付费开通，确认后即成正式学员。',
         []),
-    6: ('正式学员 🎉',
+    5: ('正式学员 🎉',
         '沿培养路径继续推进：学员阶段 → 实训阶段 → 实习阶段。',
         []),
 }
@@ -381,7 +376,7 @@ class WorkbenchWindow(QMainWindow):
             n.setWordWrap(True)
             self.detail.addWidget(n)
 
-        # 进群凭证 = 二维码直接展示在工作台内（可选资产，缺省占位）
+        # 进群凭证附带：问卷完成后二维码直接附在领任务面板（可选资产，缺省占位）
         if stage == 1:
             self.detail.addSpacing(8)
             if GROUP_QRCODE.exists():
@@ -397,7 +392,7 @@ class WorkbenchWindow(QMainWindow):
 
         self.detail.addSpacing(10)
         for text, kind, arg in actions:
-            b = QPushButton(text, objectName='primary' if kind in ('survey', 'in_group') else 'ghost')
+            b = QPushButton(text, objectName='primary' if kind == 'survey' else 'ghost')
             b.setCursor(Qt.PointingHandCursor)
             b.setMinimumWidth(220)
             if kind == 'survey':
@@ -406,8 +401,6 @@ class WorkbenchWindow(QMainWindow):
                 b.clicked.connect(self._open_site)
             elif kind == 'advance':
                 b.clicked.connect(self._on_task_assigned)
-            elif kind == 'in_group':
-                b.clicked.connect(self._on_in_group)
             elif kind == 'deliver':
                 b.clicked.connect(self._on_deliver)
             self.detail.addWidget(b)
@@ -415,14 +408,6 @@ class WorkbenchWindow(QMainWindow):
         self.detail.addStretch()
 
     # ---- 节点动作 ----
-    def _on_in_group(self):
-        """学员扫码进群后在工作台内确认，推进到领任务（触发器在环内）。"""
-        ok, err = store.mark_in_group(self._my_name)
-        if ok:
-            self._show_stage(2)
-        else:
-            self._set_msg(f'⚠ {err}', DANGER)
-
     def _continue_survey(self):
         app = store.get_application(self._my_name) if self._my_name else None
         self._show_survey(app)
@@ -433,7 +418,7 @@ class WorkbenchWindow(QMainWindow):
     def _on_task_assigned(self):
         ok, err = store.assign_task(self._my_name)
         if ok:
-            self._show_stage(3)
+            self._show_stage(2)
         else:
             self._set_msg(f'⚠ {err}', DANGER)
 
@@ -449,7 +434,7 @@ class WorkbenchWindow(QMainWindow):
             'filename': dest.name, 'path': dest.name,
         })
         if ok:
-            self._show_stage(4)
+            self._show_stage(3)
         else:
             self._set_msg(f'⚠ {err}', DANGER)
 

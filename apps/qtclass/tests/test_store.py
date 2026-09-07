@@ -4,7 +4,7 @@ import json
 
 
 class TestStateMachine:
-    """applied → survey_done → invited → in_group → task_assigned → task_submitted"""
+    """applied → survey_done → invited → task_assigned → task_submitted"""
 
     NAME = '状态机测试员'
 
@@ -44,13 +44,6 @@ class TestStateMachine:
         assert ok, err
         assert tmp_store.get_application(self.NAME)['status'] == 'invited'
 
-    def test_mark_in_group(self, tmp_store):
-        """进群确认：扫码后在工作台内点击（触发器在环内）。"""
-        self._new_app(tmp_store)
-        ok, err = tmp_store.mark_in_group(self.NAME)
-        assert ok, err
-        assert tmp_store.get_application(self.NAME)['status'] == 'in_group'
-
     def test_assign_task(self, tmp_store):
         self._new_app(tmp_store)
         ok, err = tmp_store.assign_task(self.NAME)
@@ -72,7 +65,6 @@ class TestStateMachine:
             (lambda: tmp_store.create_application(name=self.NAME), 'applied'),
             (lambda: tmp_store.submit_survey(self.NAME, {'self_position': '学习成长'}), 'survey_done'),
             (lambda: tmp_store.grant_invite(self.NAME), 'invited'),
-            (lambda: tmp_store.mark_in_group(self.NAME), 'in_group'),
             (lambda: tmp_store.assign_task(self.NAME), 'task_assigned'),
             (lambda: tmp_store.submit_delivery(self.NAME, {'filename': 'a.zip'}), 'task_submitted'),
         ]

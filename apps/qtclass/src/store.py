@@ -6,7 +6,7 @@
 架构（河床）：学员旅程是一条连续流程，每个状态迁移都是系统内事件，
 不依赖外部服务做缝合。状态枚举即流程状态机的状态集：
 
-    applied → survey_done → invited → in_group → task_assigned
+    applied → survey_done → invited → task_assigned
             → task_submitted → reviewing → graded → enrolled
 
 终态外分支：dormant（超时未响应，可重新激活）、rejected（未通过，终态）。
@@ -76,13 +76,8 @@ def submit_survey(name: str, answers: dict) -> tuple[bool, str]:
 
 
 def grant_invite(name: str) -> tuple[bool, str]:
-    """发放入群凭证（系统内动作，取代邮件通知）。「发凭证=可进群」。"""
+    """发放入群凭证（系统内动作，取代邮件通知）。凭证直接附带在领任务面板。"""
     return _update(name, status='invited')
-
-
-def mark_in_group(name: str) -> tuple[bool, str]:
-    """进群确认：学员扫码进群后在工作台内点击确认（触发器在环内）。"""
-    return _update(name, status='in_group')
 
 
 def assign_task(name: str) -> tuple[bool, str]:

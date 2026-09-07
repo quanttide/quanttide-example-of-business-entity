@@ -37,24 +37,19 @@ class TestFullJourney:
         assert '还有必填未答' in window.msg.text()
         assert tmp_store.get_application(self.NAME)['status'] == 'applied'
 
-        # 3. 问卷提交 → 发凭证 → 凭证面板（消息落在重建后的活面板上）
+        # 3. 问卷提交 → 发凭证 → 直接进领任务面板（二维码附带，无确认门槛）
         self._fill_survey(window)
         window._on_survey_submit()
         assert tmp_store.get_application(self.NAME)['status'] == 'invited'
         assert window.msg.text() == '✓ 问卷已收到，进群凭证已发放'
-        assert window.journey.stage == 2  # 时间线高亮「进群」
+        assert window.journey.stage == 2  # 时间线高亮「领任务」
 
-        # 4. 进群确认（原断点：凭证节点无动作可推进）
-        window._on_in_group()
-        assert tmp_store.get_application(self.NAME)['status'] == 'in_group'
-        assert window.journey.stage == 3  # 「领任务」
-
-        # 5. 领任务 → 任务进行中（时间线「交付」）
+        # 4. 领任务 → 任务进行中（时间线「交付」）
         window._on_task_assigned()
         assert tmp_store.get_application(self.NAME)['status'] == 'task_assigned'
-        assert window.journey.stage == 4
+        assert window.journey.stage == 3
 
-        # 6. 交付：mock 文件选择器 → 文件入库 + 状态迁移（时间线「评审」）
+        # 5. 交付：mock 文件选择器 → 文件入库 + 状态迁移（时间线「评审」）
         delivery = tmp_path / 'task1.py'
         delivery.write_text('print("交付物")')
         monkeypatch.setattr(
@@ -63,7 +58,7 @@ class TestFullJourney:
         window._on_deliver()
         app = tmp_store.get_application(self.NAME)
         assert app['status'] == 'task_submitted'
-        assert window.journey.stage == 5
+        assert window.journey.stage == 4
         saved = tmp_store.DB_PATH.parent / 'deliveries' / self.NAME / 'task1.py'
         assert saved.read_text() == 'print("交付物")'
 
@@ -74,7 +69,7 @@ class TestFullJourney:
         tmp_store.grant_invite(self.NAME)  # 停在「进群凭证」节点
         window.query_name.setText(self.NAME)
         window._on_query()
-        assert window.journey.stage == 2  # invited → 凭证面板，时间线「进群」
+        assert window.journey.stage == 2  # invited → 领任务面板（凭证附带），时间线「领任务」
         assert self.NAME in window.detail.itemAt(3).widget().text()
 
     def test_survey_validation_blocks_incomplete(self, window, tmp_store):
