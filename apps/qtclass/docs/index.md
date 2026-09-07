@@ -1,12 +1,11 @@
 # 量潮课堂工作台文档
 
-工作台文档按读者分三区：
+工作台文档按读者分两区：
 
 | 分区 | 读者 | 内容 |
 |------|------|------|
 | [user-guide](./user-guide/index.md) | 学员与课堂运营 | 旅程怎么走、每个节点做什么、进度怎么查 |
-| [dev-guide](./dev-guide/index.md) | 开发者 | 河床架构、状态机即数据、运行测试、扩展流程 |
-| [api-references](./api-references/index.md) | 开发者 | store 状态迁移函数与状态映射参考 |
+| [dev-guide](./dev-guide/index.md) | 开发者 | 架构、状态机即数据、API 参考、运行测试、扩展流程 |
 
 产品定位与路线见 [README](../../README.md) 与 [ROADMAP](../../ROADMAP.md)。
 
