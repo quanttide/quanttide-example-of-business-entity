@@ -30,7 +30,7 @@ class TestFullAssessment:
         window._on_submit()
         assert window.msg.text() == '✓ 报名已提交'
         assert tmp_store.get_application(self.NAME)['status'] == 'applied'
-        assert window.journey.stage == 1
+        assert window.assessment.stage == 1
 
         # 2. 问卷必填校验：缺答拦截，留在问卷面板
         window._on_survey_submit()
@@ -42,12 +42,12 @@ class TestFullAssessment:
         window._on_survey_submit()
         assert tmp_store.get_application(self.NAME)['status'] == 'invited'
         assert window.msg.text() == '✓ 问卷已收到，进群凭证已发放'
-        assert window.journey.stage == 2  # 时间线高亮「领任务」
+        assert window.assessment.stage == 2  # 时间线高亮「领任务」
 
         # 4. 领任务 → 任务进行中（时间线「交付」）
         window._on_task_assigned()
         assert tmp_store.get_application(self.NAME)['status'] == 'task_assigned'
-        assert window.journey.stage == 3
+        assert window.assessment.stage == 3
 
         # 5. 交付：mock 文件选择器 → 文件入库 + 状态迁移（时间线「评审」）
         delivery = tmp_path / 'task1.py'
@@ -58,7 +58,7 @@ class TestFullAssessment:
         window._on_deliver()
         app = tmp_store.get_application(self.NAME)
         assert app['status'] == 'task_submitted'
-        assert window.journey.stage == 4
+        assert window.assessment.stage == 4
         saved = tmp_store.DB_PATH.parent / 'deliveries' / self.NAME / 'task1.py'
         assert saved.read_text() == 'print("交付物")'
 
@@ -69,7 +69,7 @@ class TestFullAssessment:
         tmp_store.grant_invite(self.NAME)  # 停在「进群凭证」节点
         window.query_name.setText(self.NAME)
         window._on_query()
-        assert window.journey.stage == 2  # invited → 领任务面板（凭证附带），时间线「领任务」
+        assert window.assessment.stage == 2  # invited → 领任务面板（凭证附带），时间线「领任务」
         assert self.NAME in window.detail.itemAt(3).widget().text()
 
     def test_survey_validation_blocks_incomplete(self, window, tmp_store):
@@ -86,4 +86,4 @@ class TestFullAssessment:
         window._on_query()
         assert '未找到' in window.msg.text()
         assert window.name is window.detail.itemAt(2).widget() or True
-        assert window.journey.stage == 0
+        assert window.assessment.stage == 0

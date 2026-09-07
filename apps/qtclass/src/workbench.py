@@ -1,9 +1,9 @@
 # 量潮课堂工作台——河床架构参考实现（快照版）
 # 本目录为独立样例：本地 SQLite 存储 + PySide6 界面，无外部服务依赖。
 
-"""学员工作台 GUI：以旅程时间线为中枢的单窗口应用。
+"""学员工作台 GUI：以考核进度时间线为中枢的单窗口应用。
 
-信息架构：旅程时间线常驻左侧作为主干，右侧详情面板永远是
+信息架构：考核时间线常驻左侧作为主干，右侧详情面板永远是
 「当前节点的动作」——报名表单就是「报名」节点的动作，
 问卷/领任务/交付是主干上的后续节点，不设并列 Tab。
 
@@ -75,10 +75,10 @@ COURSES = [
     ('数据工程', '高阶'),
 ]
 
-# 学员旅程（脱胎于招聘考核：报名如投递，任务交付即考核，评审通过即发资格入基地）
-JOURNEY = ['报名', '问卷', '领任务', '交付', '评审', '入册']
+# 学员考核流程（脱胎于招聘考核：报名如投递，任务交付即考核，评审通过即发资格入基地）
+ASSESSMENT = ['报名', '问卷', '领任务', '交付', '评审', '入册']
 
-# 状态机状态 → 旅程阶段索引
+# 状态机状态 → 考核阶段索引
 STATUS_STAGE = {
     'applied': 0,
     'survey_done': 1,
@@ -92,11 +92,11 @@ STATUS_STAGE = {
     'rejected': 0,
 }
 
-# 旅程面板 → 时间线节点：面板以动作定义，时间线以旅程节点高亮
+# 考核面板 → 时间线节点：面板以动作定义，时间线以考核节点高亮
 # 如：面板 1（领任务，附带二维码）对应时间线「领任务」节点
-STAGE_JOURNEY = {0: 0, 1: 2, 2: 3, 3: 4, 4: 5, 5: 5}
+STAGE_ASSESSMENT = {0: 0, 1: 2, 2: 3, 3: 4, 4: 5, 5: 5}
 
-# 各旅程节点的详情面板：标题 + 说明 + 动作列表 (文案, 类型, 参数)
+# 各考核节点的详情面板：标题 + 说明 + 动作列表 (文案, 类型, 参数)
 # 类型：survey=内嵌问卷 / site=打开学习中心 / advance=学员确认推进 / deliver=工作台内交付
 STAGE_DETAIL = {
     0: ('报名已提交',
@@ -145,8 +145,8 @@ GROUP_QRCODE = Path(__file__).resolve().parent / 'assets' / 'group-qrcode.png'
 LEARN_CENTER_URL = 'https://class.quanttide.com'
 
 
-class JourneyWidget(QWidget):
-    """纵向旅程时间线：圆点 + 连线，已完成/当前/未到三态。"""
+class AssessmentWidget(QWidget):
+    """纵向考核时间线：圆点 + 连线，已完成/当前/未到三态。"""
 
     STEP_H, DOT_X, DOT_R = 52, 22, 7
 
@@ -154,7 +154,7 @@ class JourneyWidget(QWidget):
         super().__init__()
         self.stage = 0
         self.setMinimumWidth(180)
-        self.setMinimumHeight(self.STEP_H * len(JOURNEY) + 24)
+        self.setMinimumHeight(self.STEP_H * len(ASSESSMENT) + 24)
 
     def set_stage(self, stage: int):
         self.stage = stage
@@ -166,8 +166,8 @@ class JourneyWidget(QWidget):
         font = QFont(self.font())
         p.setFont(font)
         x, y = self.DOT_X, 20
-        for i, step in enumerate(JOURNEY):
-            if i < len(JOURNEY) - 1:
+        for i, step in enumerate(ASSESSMENT):
+            if i < len(ASSESSMENT) - 1:
                 pen = QPen(QColor(DONE if i < self.stage else '#E8E8E8'), 2)
                 p.setPen(pen)
                 p.drawLine(x, y + self.DOT_R, x, y + self.STEP_H - self.DOT_R)
@@ -220,7 +220,7 @@ def clear_layout(layout):
 
 
 class WorkbenchWindow(QMainWindow):
-    """学员工作台：品牌栏 + 旅程时间线（主干）+ 当前节点详情（动作面板）。"""
+    """学员工作台：品牌栏 + 考核时间线（主干）+ 当前节点详情（动作面板）。"""
 
     def __init__(self):
         super().__init__()
@@ -264,13 +264,13 @@ class WorkbenchWindow(QMainWindow):
         bl.setContentsMargins(32, 24, 32, 24)
         bl.setSpacing(20)
 
-        journey_card = QFrame(objectName='card')
-        jl = QVBoxLayout(journey_card)
+        assessment_card = QFrame(objectName='card')
+        jl = QVBoxLayout(assessment_card)
         jl.setContentsMargins(20, 20, 8, 20)
-        self.journey = JourneyWidget()
-        jl.addWidget(self.journey)
+        self.assessment = AssessmentWidget()
+        jl.addWidget(self.assessment)
         jl.addStretch()
-        bl.addWidget(journey_card)
+        bl.addWidget(assessment_card)
 
         self.detail_card = QFrame(objectName='card')
         self.detail = QVBoxLayout(self.detail_card)
@@ -283,7 +283,7 @@ class WorkbenchWindow(QMainWindow):
     # ---- 详情面板：报名节点动作 = 报名表单 ----
     def _show_form(self):
         clear_layout(self.detail)
-        self.journey.set_stage(0)
+        self.assessment.set_stage(0)
 
         self.detail.addWidget(QLabel('开始你的学习', objectName='title'))
         self.detail.addWidget(QLabel('提交报名后完成准入问卷，即可扫码进群。',
@@ -318,7 +318,7 @@ class WorkbenchWindow(QMainWindow):
     # ---- 详情面板：内嵌准入问卷（身份信息由报名承载，这里只问动机） ----
     def _show_survey(self, app: dict | None = None):
         clear_layout(self.detail)
-        self.journey.set_stage(1)  # 时间线高亮「问卷」节点
+        self.assessment.set_stage(1)  # 时间线高亮「问卷」节点
 
         self.detail.addWidget(QLabel('准入问卷', objectName='title'))
         intro = QLabel(SURVEY_INTRO, objectName='muted')
@@ -359,13 +359,13 @@ class WorkbenchWindow(QMainWindow):
         self._add_msg()
         self.detail.addStretch()
 
-    # ---- 详情面板：旅程各节点动作 ----
+    # ---- 详情面板：考核各节点动作 ----
     def _show_stage(self, stage: int, note: str = ''):
         clear_layout(self.detail)
-        self.journey.set_stage(STAGE_JOURNEY.get(stage, stage))
+        self.assessment.set_stage(STAGE_ASSESSMENT.get(stage, stage))
 
         heading, desc, actions = STAGE_DETAIL.get(
-            stage, (JOURNEY[stage], '联系课堂确认当前状态。', []))
+            stage, (ASSESSMENT[stage], '联系课堂确认当前状态。', []))
         self.detail.addWidget(QLabel(heading, objectName='h2'))
         self.detail.addSpacing(2)
         d = QLabel(desc, objectName='desc')
