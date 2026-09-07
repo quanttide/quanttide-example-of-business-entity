@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+
+# 河床样例演示库（首跑生成）
+apps/qtclass/src/data/
