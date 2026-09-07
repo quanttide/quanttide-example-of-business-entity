@@ -1,0 +1,42 @@
+{
+  "title": "最近一周提交统计",
+  "since": "7 days ago",
+  "date": "2026-07-08",
+  "total": 321,
+  "repos": [
+    { "name": "data/brochure", "commits": 30, "note": "宣传册更新" },
+    { "name": "data/journal", "commits": 101, "note": "工作日志" },
+    { "name": "data/profile", "commits": 15, "note": "战略/档案更新" },
+    { "name": "data/context", "commits": 13, "note": "上下文更新" },
+    { "name": "data/intention", "commits": 6, "note": "意图文档" },
+    { "name": "data/insight", "commits": 2, "note": "认知笔记" },
+    { "name": "data/report", "commits": 1, "note": "工作日报" },
+    { "name": "data/archive", "commits": 0, "note": "" },
+    { "name": "data/history", "commits": 0, "note": "" },
+    { "name": "data/library", "commits": 0, "note": "" },
+    { "name": "data/roadmap", "commits": 0, "note": "" },
+    { "name": "apps/qtadmin", "commits": 6, "note": "管理后台" },
+    { "name": "apps/qtcloud", "commits": 4, "note": "云CLI" },
+    { "name": "apps/qtrecurit", "commits": 16, "note": "招聘" },
+    { "name": "apps/qtclass", "commits": 0, "note": "" },
+    { "name": "apps/qtconsult", "commits": 0, "note": "" },
+    { "name": "apps/qtdata", "commits": 0, "note": "" },
+    { "name": "apps/qtweb", "commits": 0, "note": "" },
+    { "name": "docs/handbook", "commits": 2, "note": "工作手册" },
+    { "name": "docs/tutorial", "commits": 17, "note": "教程" },
+    { "name": "docs/bylaw", "commits": 0, "note": "" },
+    { "name": "docs/essay", "commits": 0, "note": "" },
+    { "name": "docs/gallery", "commits": 0, "note": "" },
+    { "name": "docs/specification", "commits": 0, "note": "" },
+    { "name": "examples/default", "commits": 14, "note": "实验/示例" },
+    { "name": "quanttide-tech (主仓库)", "commits": 94, "note": "子模块引用更新" }
+  ],
+  "observations": [
+    "data/journal 以 101 commits 居首——日志驱动的工作习惯已形成",
+    "data/brochure 30 commits 全在 qtdata 宣传册——本周重点在对外物料",
+    "qtrecurit 16 commits 活跃——招聘流程在迭代",
+    "tutorial 17 commits——教程文档在同步更新",
+    "主仓库 94 commits 大部分是子模块引用更新（chore: update submodule）",
+    "qtclass、qtconsult、qtdata（app端）、qtweb 本周零提交——这些业务线的开发工作暂停或不在本月主仓库跟踪"
+  ]
+}

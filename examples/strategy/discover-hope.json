@@ -1,0 +1,32 @@
+{
+  "title": "本周进展发现",
+  "method": "摘取更新素材 → LLM 分析亮点",
+  "since": "2026-07-01",
+  "source_count": 13,
+  "discoveries": [
+    {
+      "highlights": [
+        {
+          "signal": "qtadmin 实现 share 模块（Rust 版 opensource.py）并发布 v0.0.17，附带 ROADMAP 和配置模板",
+          "reason": "将 LLM 净化私有仓库的原创能力转化为可复用的 CLI 模块，标志核心工具进入产品化阶段，为开源生态提供标准化组件。"
+        },
+        {
+          "signal": "qtrecurit 完成招聘漏斗全流程（附件下载、LLM 分类、漏斗报告），首次发布 v0.0.1，并新增 AGENTS.md 架构文档",
+          "reason": "招聘自动化工具从零散功能集成端到端能力，首个版本发布意味着可投入实际使用，架构文档体现了系统性设计思路。"
+        },
+        {
+          "signal": "data/brochure 大幅重构量潮数据宣传册，明确数据规模、保密协议、交付物区分，细化蓝图与报告差异",
+          "reason": "对外宣传材料从草稿级走向精炼，数据规模量化、法律条款补充、交付流程清晰化，表明团队已完成商业化准备的最后打磨。"
+        },
+        {
+          "signal": "data/context 新增 infra.md、skill.md、org.md 组织与基础设施上下文文档，迁移 devops 思考至专用文件",
+          "reason": "团队知识库系统化建设加速，为成员协作、运维决策、技能传承提供结构化参考，减少信息孤岛。"
+        },
+        {
+          "signal": "data/intention 添加战略管理、议事管理、qtcloud-code（Vibe Coding 治理）三个明确意图",
+          "reason": "团队在战略规划、议事规则、编码治理三个维度形成显式承诺，特别是 Vibe Coding 治理预示新的开发模式探索，体现组织成熟度提升。"
+        }
+      ]
+    }
+  ]
+}

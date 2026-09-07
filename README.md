@@ -1,1 +1,0 @@
-# quanttide-example-of-business-entity
