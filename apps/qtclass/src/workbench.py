@@ -11,7 +11,7 @@
 
 - 状态迁移全部是系统内事件（本地存储），无邮件、无外部服务
 - 问卷为工作台内嵌表单，只问动机题；身份信息由报名一次采集
-- 进群凭证 = 工作台内直接展示二维码（可选资产，缺省显示占位说明）
+- 进群凭证 = 工作台内直接展示二维码（可选资产，缺省显示占位说明），扫码进群后在工作台内确认，闭环推进到领任务
 - 领任务/交付 = 工作台内动作（学员点击、文件选择器），触发器不在环外
 
 运行：python workbench.py（依赖 PySide6；无需任何配置）
@@ -93,15 +93,20 @@ STATUS_STAGE = {
     'rejected': 0,
 }
 
+# 旅程面板 → 时间线节点：面板以动作定义，时间线以旅程节点高亮
+# 如：面板 1（进群凭证）对应时间线「进群」节点
+STAGE_JOURNEY = {0: 0, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 6: 6}
+
 # 各旅程节点的详情面板：标题 + 说明 + 动作列表 (文案, 类型, 参数)
-# 类型：survey=内嵌问卷 / site=打开学习中心 / advance=学员确认推进 / deliver=工作台内交付
+# 类型：survey=内嵌问卷 / site=打开学习中心 / advance=学员确认推进 /
+#       in_group=扫码后确认进群 / deliver=工作台内交付
 STAGE_DETAIL = {
     0: ('报名已提交',
         '完成准入问卷即进入进群环节（7 天内完成，超时学习资格转休眠）。',
         [('填写准入问卷', 'survey', None)]),
     1: ('进群凭证',
-        '这是你的入群二维码（7 天内有效），扫码即进实训基地群；进群后即可领任务。',
-        []),
+        '这是你的入群二维码（7 天内有效），扫码进实训基地群；进群后在下方确认，即可领任务。',
+        [('我已进群，去领任务', 'in_group', None)]),
     2: ('领取任务',
         '在学习中心浏览任务清单，选择要做的任务。',
         [('打开学习中心', 'site', None),
@@ -312,15 +317,13 @@ class WorkbenchWindow(QMainWindow):
         self.btn_submit.clicked.connect(self._on_submit)
         self.detail.addWidget(self.btn_submit)
 
-        self.msg = QLabel('', objectName='message')
-        self.msg.setWordWrap(True)
-        self.detail.addWidget(self.msg)
+        self._add_msg()
         self.detail.addStretch()
 
     # ---- 详情面板：内嵌准入问卷（身份信息由报名承载，这里只问动机） ----
     def _show_survey(self, app: dict | None = None):
         clear_layout(self.detail)
-        self.journey.set_stage(0)
+        self.journey.set_stage(1)  # 时间线高亮「问卷」节点
 
         self.detail.addWidget(QLabel('准入问卷', objectName='title'))
         intro = QLabel(SURVEY_INTRO, objectName='muted')
@@ -358,15 +361,13 @@ class WorkbenchWindow(QMainWindow):
         self.btn_survey.clicked.connect(self._on_survey_submit)
         self.detail.addWidget(self.btn_survey)
 
-        self.survey_msg = QLabel('', objectName='message')
-        self.survey_msg.setWordWrap(True)
-        self.detail.addWidget(self.survey_msg)
+        self._add_msg()
         self.detail.addStretch()
 
     # ---- 详情面板：旅程各节点动作 ----
     def _show_stage(self, stage: int, note: str = ''):
         clear_layout(self.detail)
-        self.journey.set_stage(stage)
+        self.journey.set_stage(STAGE_JOURNEY.get(stage, stage))
 
         heading, desc, actions = STAGE_DETAIL.get(
             stage, (JOURNEY[stage], '联系课堂确认当前状态。', []))
@@ -396,7 +397,7 @@ class WorkbenchWindow(QMainWindow):
 
         self.detail.addSpacing(10)
         for text, kind, arg in actions:
-            b = QPushButton(text, objectName='primary' if kind == 'survey' else 'ghost')
+            b = QPushButton(text, objectName='primary' if kind in ('survey', 'in_group') else 'ghost')
             b.setCursor(Qt.PointingHandCursor)
             b.setMinimumWidth(220)
             if kind == 'survey':
@@ -405,12 +406,23 @@ class WorkbenchWindow(QMainWindow):
                 b.clicked.connect(self._open_site)
             elif kind == 'advance':
                 b.clicked.connect(self._on_task_assigned)
+            elif kind == 'in_group':
+                b.clicked.connect(self._on_in_group)
             elif kind == 'deliver':
                 b.clicked.connect(self._on_deliver)
             self.detail.addWidget(b)
+        self._add_msg()
         self.detail.addStretch()
 
     # ---- 节点动作 ----
+    def _on_in_group(self):
+        """学员扫码进群后在工作台内确认，推进到领任务（触发器在环内）。"""
+        ok, err = store.mark_in_group(self._my_name)
+        if ok:
+            self._show_stage(2)
+        else:
+            self._set_msg(f'⚠ {err}', DANGER)
+
     def _continue_survey(self):
         app = store.get_application(self._my_name) if self._my_name else None
         self._show_survey(app)
@@ -442,6 +454,12 @@ class WorkbenchWindow(QMainWindow):
             self._set_msg(f'⚠ {err}', DANGER)
 
     # ---- 数据流 ----
+    def _add_msg(self):
+        """消息标签属于当前面板：随面板重建，避免悬空引用。"""
+        self.msg = QLabel('', objectName='message')
+        self.msg.setWordWrap(True)
+        self.detail.addWidget(self.msg)
+
     def _set_msg(self, text, color=DONE):
         self.msg.setText(text)
         self.msg.setStyleSheet(f'color: {color}; font-size: 13px;')
@@ -483,21 +501,18 @@ class WorkbenchWindow(QMainWindow):
                 answers[key] = v
         if missing:
             self._submitting = False
-            self.survey_msg.setText('⚠ 还有必填未答：' + '；'.join(missing))
-            self.survey_msg.setStyleSheet(f'color: {DANGER}; font-size: 12px;')
+            self._set_msg('⚠ 还有必填未答：' + '；'.join(missing), DANGER)
             return
         ok, err = store.submit_survey(self._my_name, answers)
         if not ok:
             self._submitting = False
-            self.survey_msg.setText(f'⚠ {err}')
-            self.survey_msg.setStyleSheet(f'color: {DANGER}; font-size: 12px;')
+            self._set_msg(f'⚠ {err}', DANGER)
             return
-        # 问卷提交 → 立即发凭证（系统内动作，无邮件）：提交与发凭证一气呵成
+        # 问卷提交 → 立即发凭证（系统内动作，无邮件）：提交与发凭证一气呢成
         ok2, err2 = store.grant_invite(self._my_name)
         self._submitting = False
         if not ok2:
-            self.survey_msg.setText(f'⚠ {err2}')
-            self.survey_msg.setStyleSheet(f'color: {DANGER}; font-size: 12px;')
+            self._set_msg(f'⚠ {err2}', DANGER)
             return
         self._show_stage(1)
         self._set_msg('✓ 问卷已收到，进群凭证已发放')
