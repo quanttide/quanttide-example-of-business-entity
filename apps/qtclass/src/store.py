@@ -71,7 +71,7 @@ def create_application(name: str, school: str = '', course: str = '') -> tuple[b
 
 def submit_survey(name: str, answers: dict) -> tuple[bool, str]:
     """问卷提交 = 系统内记录创建（触发器为内部事件，而非外部表单回调）。"""
-    return _update(name, status='survey_done',
+    return _update(name, status='survey_done', survey_at=_now(),
                    survey_json=json.dumps(answers, ensure_ascii=False))
 
 
